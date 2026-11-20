@@ -3,3 +3,4 @@
 from . import test_cufe_computation
 from . import test_xml_generation
 from . import test_response_processing
+from . import test_dian_document_content

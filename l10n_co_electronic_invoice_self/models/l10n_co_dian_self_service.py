@@ -1502,7 +1502,10 @@ class L10nCoDianSelfService(models.AbstractModel):
         invoice = vals["invoice"]
         cufe_cude_cuds = self._get_cufe_cude_cuds(document_node, vals)
         document_node["cbc:UUID"]["_text"] = sha384(cufe_cude_cuds.encode()).hexdigest()
-        document_node["cbc:Note"] = {"_text": cufe_cude_cuds}
+        # The CUFE/CUDE/CUDS input string contains the technical key or the
+        # software PIN, which are secrets. It must never be written to the
+        # XML delivered to the customer, so cbc:Note is left out.
+        document_node["cbc:Note"] = None
 
         if invoice.currency_id != invoice.company_currency_id:
             trm = self.format_float(
@@ -2338,7 +2341,10 @@ Concepto de: {base_line['product_id'].name}"
         )
         iva_total = 0.0
         otros_total = 0.0
-        for tax_total in root.findall(f".//{{{NS_CAC_FULL}}}TaxTotal"):
+        # Only the document-level TaxTotal nodes: the line-level ones
+        # (InvoiceLine/TaxTotal) repeat the same amounts and would be
+        # counted twice.
+        for tax_total in root.findall(f"{{{NS_CAC_FULL}}}TaxTotal"):
             tax_subtotals = tax_total.findall(f"{{{NS_CAC_FULL}}}TaxSubtotal")
             for subtotal in tax_subtotals:
                 tax_scheme = subtotal.find(
